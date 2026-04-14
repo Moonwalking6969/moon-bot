@@ -1,9 +1,9 @@
 import streamlit as st
 import requests
 
-# Configuration
-OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
-MODEL_NAME = st.secrets.get("MODEL_NAME")
+# Configuration - using Groq instead of OpenRouter
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+MODEL_NAME = st.secrets.get("GROQ_MODEL", "llama3-70b-8192")  # default Groq model
 
 # Character description
 CHARACTER = "Moon, your favourite person"
@@ -90,14 +90,12 @@ TONE BALANCE:
 Stay fully in character as Moon. You ARE Moon talking to your Natalie right now. 🌙"""
     return system_prompt
 
-def call_openrouter(messages):
-    url = "https://openrouter.ai/api/v1/chat/completions"
+def call_openrouter(messages):   # function name kept for compatibility
+    url = "https://api.groq.com/openai/v1/chat/completions"
 
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:8501",
-        "X-Title": "Moon Bot"
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
     }
 
     data = {
@@ -109,11 +107,11 @@ def call_openrouter(messages):
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code == 401:
-            return "Authentication Error. Go to https://openrouter.ai/keys and create a new API key."
+            return "Authentication Error. Check your GROQ_API_KEY in secrets."
         if response.status_code == 402:
-            return "Payment Required. Add credits at https://openrouter.ai/settings/credits or use a free model."
+            return "Payment Required. Add credits to your Groq account or use a free model."
         if response.status_code == 404:
-            return "Model Not Found. Try: meta-llama/llama-3.2-3b-instruct:free"
+            return f"Model Not Found. Check your GROQ_MODEL. Available: llama3-70b-8192, llama3-8b-8192, mixtral-8x7b-32768, gemma2-9b-it"
 
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
